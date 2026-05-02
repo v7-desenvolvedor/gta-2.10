@@ -1,4 +1,4 @@
-# SA:MP Mobile Client 2.10 (x64) for GTA: San Andreas
+# SA:MP Mobile Client 2.10 (x64) for GTA: San Andreas by v7dapaz
 
 # ᐳ Description
 > * Arch: `arm64-v8a`, `armeabi-v7a`

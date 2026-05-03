@@ -1386,12 +1386,23 @@ void NvUtilInit_hook()
 {
     FLog("NvUtilInit Hooked");
 
-    // Chama a função original primeiro para inicializar os buffers internos
+    // Chama a função original primeiro
     NvUtilInit();
 
-    // 1. Obtém o endereço do buffer de armazenamento na memória da libGTASA
-    // O ponteiro g_pszStorage aponta para o local onde o GTA guarda a string do caminho
-    g_pszStorage = (char*)(g_libGTASA + (VER_x32 ? 0x6D687C : 0x8B46A8)); // StorageRootBuffer
+    // 1. Obtém o endereço do buffer de armazenamento
+    g_pszStorage = (char*)(g_libGTASA + (VER_x32 ? 0x6D687C : 0x8B46A8));
+
+    // 2. Define o NOVO caminho da DATA
+    // Importante: O buffer g_pszStorage costuma ter tamanho suficiente (512 bytes)
+    const char* novoCaminho = "/storage/emulated/0/sampdata/files/";
+    
+    if(g_pszStorage != nullptr) {
+        // Limpa o buffer antigo e copia o novo caminho
+        memset(g_pszStorage, 0, 512); 
+        strcpy(g_pszStorage, novoCaminho);
+        
+        FLog("Novo StorageRoot definido para: %s", g_pszStorage);
+    }
 
     // 4. Agora sim, lê as configurações e aplica patches
     ReadSettingFile();

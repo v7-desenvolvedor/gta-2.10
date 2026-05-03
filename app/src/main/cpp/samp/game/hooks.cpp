@@ -1391,17 +1391,7 @@ void NvUtilInit_hook()
 
     // 1. Obtém o endereço do buffer de armazenamento na memória da libGTASA
     // O ponteiro g_pszStorage aponta para o local onde o GTA guarda a string do caminho
-    g_pszStorage = (char*)(g_libGTASA + (VER_x32 ? 0x6D687C : 0x8B46A8)); 
-
-    // 2. Define o seu novo caminho personalizado
-    const char* customPath = "/storage/emulated/0/sampdata/files/";
-
-    // 3. Sobrescreve o buffer original com o seu caminho
-    // IMPORTANTE: O buffer original na libGTASA tem um tamanho limite. 
-    // "sampdata/files/" é curto, então deve caber sem causar buffer overflow.
-    strcpy(g_pszStorage, customPath);
-
-    FLog("Storage Path alterado para: %s", g_pszStorage);
+    g_pszStorage = (char*)(g_libGTASA + (VER_x32 ? 0x6D687C : 0x8B46A8)); // StorageRootBuffer
 
     // 4. Agora sim, lê as configurações e aplica patches
     ReadSettingFile();

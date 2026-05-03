@@ -1,6 +1,11 @@
 package com.samp.mobile.game;
 
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -12,7 +17,6 @@ import com.samp.mobile.game.ui.dialog.DialogManager;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-
 
 @Obfuscate
 public class SAMP extends GTASA implements CustomKeyboard.InputListener, HeightProvider.HeightListener {
@@ -26,7 +30,39 @@ public class SAMP extends GTASA implements CustomKeyboard.InputListener, HeightP
     private AttachEdit mAttachEdit;
     private LoadingScreen mLoadingScreen;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        instance = this;
+
+        // Lógica de Permissão para Android 11 ate o 15 (API 30+)
+        checkAllFilesPermission();
+    }
+
+    private void checkAllFilesPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.addCategory("android.intent.category.DEFAULT");
+                    intent.setData(Uri.parse(String.format("package:%s", getPackageName())));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Intent intent = new Intent();
+                    intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                    startActivity(intent);
+                }
+            }
+        }
+    }
+
+    public static SAMP getInstance() {
+        return instance;
+    }
+
     public native void sendDialogResponse(int i, int i2, int i3, byte[] str);
+    
+    // ... restante dos métodos da classe
 
     public static SAMP getInstance() {
         return instance;

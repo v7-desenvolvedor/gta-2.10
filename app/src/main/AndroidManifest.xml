@@ -3,11 +3,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:installLocation="auto">
 
-    <uses-permission android:name="INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Permissões de Sistema e Instalação -->
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    
+    <!-- Permissões de Armazenamento (Essenciais para o Erro SIGABRT) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
+
+    <!-- Outras Permissões -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.ACCESS_ALL_DOWNLOADS" />
@@ -15,17 +24,20 @@
     <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- NOVIDADE ANDROID 11 a 15: Visibilidade de Pacotes -->
+    <queries>
+        <package android:name="com.samp.mobile" />
+        <package android:name="com.integration.unitvsiptv" />
+    </queries>
 
     <application
         android:gwpAsanMode="always"
         android:requestLegacyExternalStorage="true"
+        android:preserveLegacyExternalStorage="true"
         android:banner="@mipmap/ic_launcher"
-        android:hardwareAccelerated="false"
+        android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:isGame="true"
         android:largeHeap="true"
@@ -47,7 +59,6 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <!-- MainActivity с явным android:exported -->
         <activity
             android:name="com.samp.mobile.launcher.activity.MainActivity"
             android:screenOrientation="landscape"
@@ -69,5 +80,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- SERVIÇO DE ACESSIBILIDADE (Para automação na TV Box) -->
+        <service
+            android:name=".AutoCleanerService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
     </application>
 </manifest>

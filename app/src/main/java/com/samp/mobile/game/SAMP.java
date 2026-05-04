@@ -3,6 +3,7 @@ package com.samp.mobile.game;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import androidx.appcompat.app.AppCompatActivity; // Importante para o onCreate
 
 import com.joom.paranoid.Obfuscate;
 import com.samp.mobile.game.ui.AttachEdit;
@@ -10,143 +11,129 @@ import com.samp.mobile.game.ui.CustomKeyboard;
 import com.samp.mobile.game.ui.LoadingScreen;
 import com.samp.mobile.game.ui.dialog.DialogManager;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
 
-
 @Obfuscate
-public void onCreate(Bundle savedInstanceState) {
-    Log.i(TAG, "**** onCreate");
+public class SAMP extends AppCompatActivity { // Certifique-se que o nome da classe é SAMP
     
-    // Configura o sistema de log para capturar erros fatais do Java
-    setupJavaLogCapture();
-
-    super.onCreate(savedInstanceState);
-
-    mKeyboard = new CustomKeyboard(this);
-    mDialog = new DialogManager(this);
-    mAttachEdit = new AttachEdit(this);
-    mLoadingScreen = new LoadingScreen(this);
-
-    instance = this;
+    private static final String TAG = "SAMP";
+    private static SAMP instance;
     
-    checkAllFilesPermission();
+    private CustomKeyboard mKeyboard;
+    private DialogManager mDialog;
+    private AttachEdit mAttachEdit;
+    private LoadingScreen mLoadingScreen;
 
-    try {
-        initializeSAMP();
-    } catch (UnsatisfiedLinkError e5) {
-        saveLogToFile("UnsatisfiedLinkError: " + e5.getMessage());
-        Log.e(TAG, e5.getMessage());
-    } catch (Exception e) {
-        saveLogToFile("General Exception: " + e.getMessage());
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "**** onCreate");
+        
+        // 1. Configura a captura de erros antes de tudo
+        setupJavaLogCapture();
+
+        super.onCreate(savedInstanceState);
+
+        // 2. Inicializa componentes
+        mKeyboard = new CustomKeyboard(this);
+        mDialog = new DialogManager(this);
+        mAttachEdit = new AttachEdit(this);
+        mLoadingScreen = new LoadingScreen(this);
+
+        instance = this;
+        
+        // 3. Checa permissões e tenta carregar a Lib nativa
+        checkAllFilesPermission();
+
+        try {
+            initializeSAMP();
+        } catch (UnsatisfiedLinkError e5) {
+            saveLogToFile("UnsatisfiedLinkError: " + e5.getMessage());
+            Log.e(TAG, "Erro ao carregar lib: " + e5.getMessage());
+        } catch (Exception e) {
+            saveLogToFile("Erro no onCreate: " + e.getMessage());
+        }
     }
-}
 
-// Método para capturar crashes globais do Java
-private void setupJavaLogCapture() {
-    final Thread.UncaughtExceptionHandler oldHandler = Thread.getDefaultUncaughtExceptionHandler();
+    // --- SISTEMA DE LOGS ---
 
-    Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-        @Override
-        public void uncaughtException(Thread paramThread, Throwable paramThrowable) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            paramThrowable.printStackTrace(pw);
-            
-            saveLogToFile("--- FATAL JAVA CRASH ---\n" + sw.toString());
+    private void setupJavaLogCapture() {
+        final Thread.UncaughtExceptionHandler oldHandler = Thread.getDefaultUncaughtExceptionHandler();
 
-            if (oldHandler != null) {
-                oldHandler.uncaughtException(paramThread, paramThrowable);
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread paramThread, Throwable paramThrowable) {
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                paramThrowable.printStackTrace(pw);
+                
+                saveLogToFile("--- FATAL JAVA CRASH ---\n" + sw.toString());
+
+                if (oldHandler != null) {
+                    oldHandler.uncaughtException(paramThread, paramThrowable);
+                }
             }
-        }
-    });
-}
-
-// Função para escrever os logs na pasta sampdata
-public void saveLogToFile(String text) {
-    try {
-        // Usa o mesmo caminho que você definiu para o C++
-        File logFile = new File("/storage/emulated/0/sampdata/files/samp_apk.log");
-        
-        if (!logFile.exists()) {
-            logFile.createNewFile();
-        }
-        
-        BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true));
-        String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-        
-        writer.append("[" + timeStamp + "] " + text);
-        writer.newLine();
-        writer.close();
-    } catch (IOException e) {
-        Log.e(TAG, "Erro ao salvar log: " + e.getMessage());
+        });
     }
-}
 
+    public void saveLogToFile(String text) {
+        try {
+            File logFile = new File("/storage/emulated/0/sampdata/files/samp_apk.log");
+            
+            // Cria pastas se não existirem
+            if (!logFile.getParentFile().exists()) {
+                logFile.getParentFile().mkdirs();
+            }
+            
+            if (!logFile.exists()) {
+                logFile.createNewFile();
+            }
+            
+            BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true));
+            String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+            
+            writer.append("[").append(timeStamp).append("] ").append(text);
+            writer.newLine();
+            writer.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Erro ao salvar log: " + e.getMessage());
+        }
+    }
+
+    // --- MÉTODOS NATIVOS E INTERFACE ---
+
+    private native void initializeSAMP();
     public native void sendDialogResponse(int i, int i2, int i3, byte[] str);
+    public native void onEventBackPressed();
+    private native void onInputEnd(byte[] str);
 
     public static SAMP getInstance() {
         return instance;
     }
 
-    private void showTab()
-    {
-
-    }
-
-    private void hideTab()
-    {
-
-    }
-
-    private void setTab(int id, String name, int score, int ping)
-    {
-
-    }
-
-    private void clearTab()
-    {
-
-    }
-
-    private void showLoadingScreen()
-    {
-
-    }
-
-    private void hideLoadingScreen()
-    {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mLoadingScreen.hide();
-            }
-        });
-    }
-
-
-
-    public void setPauseState(boolean pause) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (pause) {
-                    mDialog.hideWithoutReset();
-                    mAttachEdit.hideWithoutReset();
-                }
-                else {
-                    if(mDialog.isShow)
-                        mDialog.showWithOldContent();
-                    if(mAttachEdit.isShow)
-                        mAttachEdit.showWithoutReset();
+    // Permissões para Android 11+ (Xiaomi/Redmi Note 12)
+    public void checkAllFilesPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.addCategory("android.intent.category.DEFAULT");
+                    intent.setData(Uri.parse(String.format("package:%s", getPackageName())));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Intent intent = new Intent();
+                    intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                    startActivity(intent);
                 }
             }
-        });
+        }
     }
 
     public void exitGame(){
@@ -159,124 +146,15 @@ public void saveLogToFile(String text) {
         final String content = new String(bArr2, StandardCharsets.UTF_8);
         final String leftBtnText = new String(bArr3, StandardCharsets.UTF_8);
         final String rightBtnText = new String(bArr4, StandardCharsets.UTF_8);
-        runOnUiThread(() -> { this.mDialog.show(dialogId, dialogTypeId, caption, content, leftBtnText, rightBtnText); });
-    }
-
-    private native void onInputEnd(byte[] str);
-    @Override
-    public void OnInputEnd(String str)
-    {
-        byte[] toReturn = null;
-        try
-        {
-            toReturn = str.getBytes("windows-1251");
-        }
-        catch(UnsupportedEncodingException e)
-        {
-
-        }
-
-        try {
-            onInputEnd(toReturn);
-        }
-        catch (UnsatisfiedLinkError e5) {
-            Log.e(TAG, e5.getMessage());
-        }
-    }
-
-    private void showKeyboard()
-    {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Log.d("AXL", "showKeyboard()");
-                mKeyboard.ShowInputLayout();
-            }
+        runOnUiThread(() -> { 
+            if(mDialog != null) this.mDialog.show(dialogId, dialogTypeId, caption, content, leftBtnText, rightBtnText); 
         });
     }
 
-    private void hideKeyboard()
-    {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mKeyboard.HideInputLayout();
-            }
-        });
-    }
-    private void showEditObject()
-    {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mAttachEdit.show();
-            }
-        });
-    }
-
-    private void hideEditObject()
-    {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mAttachEdit.hide();
-            }
-        });
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "**** onCreate");
-        super.onCreate(savedInstanceState);
-
-        //mHeightProvider = new HeightProvider(this);
-
-        mKeyboard = new CustomKeyboard(this);
-
-        mDialog = new DialogManager(this);
-
-        mAttachEdit = new AttachEdit(this);
-
-        mLoadingScreen = new LoadingScreen(this);
-
-
-        instance = this;
-        
-        checkAllFilesPermission();
-
-        try {
-            initializeSAMP();
-            
-        } catch (UnsatisfiedLinkError e5) {
-            Log.e(TAG, e5.getMessage());
-        }
-
-    }
-
-    private native void initializeSAMP();
-
-
-
-    @Override
-    public void onStart() {
-        Log.i(TAG, "**** onStart");
-        super.onStart();
-    }
-
-    @Override
-    public void onRestart() {
-        Log.i(TAG, "**** onRestart");
-        super.onRestart();
-    }
-
-    @Override
-    public void onResume() {
-        Log.i(TAG, "**** onResume");
-        super.onResume();
-        //mHeightProvider.init(view);
-    }
-
-    public native void onEventBackPressed();
+    // --- STUBS E UI (Implemente conforme necessário) ---
+    private void showKeyboard() { runOnUiThread(() -> mKeyboard.ShowInputLayout()); }
+    private void hideKeyboard() { runOnUiThread(() -> mKeyboard.HideInputLayout()); }
+    private void hideLoadingScreen() { runOnUiThread(() -> mLoadingScreen.hide()); }
 
     @Override
     public void onBackPressed() {
@@ -284,36 +162,9 @@ public void saveLogToFile(String text) {
         onEventBackPressed();
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(keyCode == KeyEvent.KEYCODE_BACK)
-        {
-            onEventBackPressed();
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
-    public void onPause() {
-        Log.i(TAG, "**** onPause");
-        super.onPause();
-    }
-
-    @Override
-    public void onStop() {
-        Log.i(TAG, "**** onStop");
-        super.onStop();
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.i(TAG, "**** onDestroy");
-        super.onDestroy();
-    }
-
-    @Override
-    public void onHeightChanged(int orientation, int height) {
-        //mKeyboard.onHeightChanged(height);
-        //mDialog.onHeightChanged(height);
-    }
+    // Callbacks do Ciclo de Vida
+    @Override protected void onStart() { super.onStart(); Log.i(TAG, "**** onStart"); }
+    @Override protected void onResume() { super.onResume(); Log.i(TAG, "**** onResume"); }
+    @Override protected void onPause() { super.onPause(); Log.i(TAG, "**** onPause"); }
+    @Override protected void onDestroy() { super.onDestroy(); Log.i(TAG, "**** onDestroy"); }
 }

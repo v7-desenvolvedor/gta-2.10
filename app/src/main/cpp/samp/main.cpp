@@ -334,7 +334,7 @@ void GameBackground()
 */
 
 extern "C" {
-	JNIEXPORT void JNICALL Java_com_samp_mobile_game_SAMP_initializeSAMP(JNIEnv *pEnv, jobject thiz)
+	JNIEXPORT void JNICALL Java_com_samp_mobile_game_GTASA_initializeSAMP(JNIEnv *pEnv, jobject thiz)
 	{
 		pJavaWrapper = new CJavaWrapper(pEnv, thiz);
 

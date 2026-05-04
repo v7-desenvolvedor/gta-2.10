@@ -10,6 +10,7 @@ import android.widget.Toast;
 import com.bytedance.shadowhook.ShadowHook;
 import com.joom.paranoid.Obfuscate;
 import com.wardrumstudios.utils.WarMedia;
+import com.samp.mobile.game.SAMP;
 
 @Obfuscate
 public class GTASA extends WarMedia {
@@ -40,6 +41,7 @@ public class GTASA extends WarMedia {
     {
         //  gtasaSelf.EnterSocialClub();
     }
+    
 
     public static void staticExitSocialClub() {
         //gtasaSelf.ExitSocialClub();
@@ -68,6 +70,7 @@ public class GTASA extends WarMedia {
     }
 
     public native void main();
+    private native void initializeSAMP();
 
     public void onActivityResult(int i, int i2, Intent intent)
     {

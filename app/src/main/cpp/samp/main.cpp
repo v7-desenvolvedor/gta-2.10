@@ -520,33 +520,34 @@ uint32_t GetTickCount()
 
 void FLog(const char* fmt, ...)
 {
-	char buffer[0xFF];
-	static FILE* flLog = nullptr;
-	const char* pszStorage = g_pszStorage;
+    char buffer[1024]; // Buffer maior para não estourar no Android 15
+    static FILE* flLog = nullptr;
+    
+    // Pega o storage e garante que não seja nulo
+    const char* pszStorage = g_pszStorage;
+    if (pszStorage == nullptr) return;
 
+    if (flLog == nullptr)
+    {
+        char logPath[1024];
+        sprintf(logPath, "%s/samp_log.txt", pszStorage);
+        flLog = fopen(logPath, "a");
+    }
 
-	if (flLog == nullptr && pszStorage != nullptr)
-	{
-		sprintf(buffer, "%s/samp_log.txt", pszStorage);
-		//LOGI("buffer: %s", buffer);
-		flLog = fopen(buffer, "a");
-	}
+    va_list arg;
+    va_start(arg, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, arg);
+    va_end(arg);
 
-	memset(buffer, 0, sizeof(buffer));
+    // Isso vai mostrar no LogCat qual arquivo EXATAMENTE falhou
+    if (strstr(buffer, "Error: file not found")) {
+        LOGI("Critico: %s", buffer);
+    }
 
-	va_list arg;
-	va_start(arg, fmt);
-	vsnprintf(buffer, sizeof(buffer), fmt, arg);
-	va_end(arg);
-
-	LOGI("%s", buffer);
-	firebase::crashlytics::Log(buffer);
-
-	if (flLog == nullptr) return;
-	fprintf(flLog, "%s\n", buffer);
-	fflush(flLog);
-
-	return;
+    if (flLog != nullptr) {
+        fprintf(flLog, "%s\n", buffer);
+        fflush(flLog);
+    }
 }
 
 void ChatLog(const char* fmt, ...)

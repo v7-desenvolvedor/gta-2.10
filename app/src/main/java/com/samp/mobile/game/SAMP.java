@@ -11,6 +11,8 @@ import com.samp.mobile.game.ui.CustomKeyboard;
 import com.samp.mobile.game.ui.LoadingScreen;
 import com.samp.mobile.game.ui.dialog.DialogManager;
 
+import com.samp.mobile.game.GTASA;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -53,7 +55,8 @@ public class SAMP extends AppCompatActivity { // Certifique-se que o nome da cla
         checkAllFilesPermission();
 
         try {
-            initializeSAMP();
+           // initializeSAMP();
+            new GTASA().initializeSAMP();
         } catch (UnsatisfiedLinkError e5) {
             saveLogToFile("UnsatisfiedLinkError: " + e5.getMessage());
             Log.e(TAG, "Erro ao carregar lib: " + e5.getMessage());

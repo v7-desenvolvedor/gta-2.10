@@ -20,31 +20,71 @@ import android.provider.Settings;
 
 
 @Obfuscate
-public class SAMP extends GTASA implements CustomKeyboard.InputListener, HeightProvider.HeightListener {
-    private static final String TAG = "SAMP";
-    private static SAMP instance;
-
-    private CustomKeyboard mKeyboard;
-    private DialogManager mDialog;
-    private HeightProvider mHeightProvider;
-
-    private AttachEdit mAttachEdit;
-    private LoadingScreen mLoadingScreen;
+public void onCreate(Bundle savedInstanceState) {
+    Log.i(TAG, "**** onCreate");
     
-    private void checkAllFilesPermission() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        if (!Environment.isExternalStorageManager()) {
-            try {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                intent.addCategory("android.intent.category.DEFAULT");
-                intent.setData(Uri.parse(String.format("package:%s", getPackageName())));
-                startActivity(intent);
-            } catch (Exception e) {
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                startActivity(intent);
+    // Configura o sistema de log para capturar erros fatais do Java
+    setupJavaLogCapture();
+
+    super.onCreate(savedInstanceState);
+
+    mKeyboard = new CustomKeyboard(this);
+    mDialog = new DialogManager(this);
+    mAttachEdit = new AttachEdit(this);
+    mLoadingScreen = new LoadingScreen(this);
+
+    instance = this;
+    
+    checkAllFilesPermission();
+
+    try {
+        initializeSAMP();
+    } catch (UnsatisfiedLinkError e5) {
+        saveLogToFile("UnsatisfiedLinkError: " + e5.getMessage());
+        Log.e(TAG, e5.getMessage());
+    } catch (Exception e) {
+        saveLogToFile("General Exception: " + e.getMessage());
+    }
+}
+
+// Método para capturar crashes globais do Java
+private void setupJavaLogCapture() {
+    final Thread.UncaughtExceptionHandler oldHandler = Thread.getDefaultUncaughtExceptionHandler();
+
+    Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread paramThread, Throwable paramThrowable) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            paramThrowable.printStackTrace(pw);
+            
+            saveLogToFile("--- FATAL JAVA CRASH ---\n" + sw.toString());
+
+            if (oldHandler != null) {
+                oldHandler.uncaughtException(paramThread, paramThrowable);
             }
         }
+    });
+}
+
+// Função para escrever os logs na pasta sampdata
+public void saveLogToFile(String text) {
+    try {
+        // Usa o mesmo caminho que você definiu para o C++
+        File logFile = new File("/storage/emulated/0/sampdata/files/samp_apk.log");
+        
+        if (!logFile.exists()) {
+            logFile.createNewFile();
+        }
+        
+        BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true));
+        String timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        
+        writer.append("[" + timeStamp + "] " + text);
+        writer.newLine();
+        writer.close();
+    } catch (IOException e) {
+        Log.e(TAG, "Erro ao salvar log: " + e.getMessage());
     }
 }
 

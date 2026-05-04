@@ -109,7 +109,7 @@ public class SAMP extends AppCompatActivity { // Certifique-se que o nome da cla
 
     // --- MÉTODOS NATIVOS E INTERFACE ---
 
-    private native void initializeSAMP();
+    
     public native void sendDialogResponse(int i, int i2, int i3, byte[] str);
     public native void onEventBackPressed();
     private native void onInputEnd(byte[] str);
